@@ -1,43 +1,74 @@
 import os
 from Classes import Produtos, Vendas
 
-produto = Produtos('cappuccino', 10.00, 11, 14)
-
-def cadastro (produto):
-    produtos = []
-    if not os.path.exists('produtos.txt'):
-        with open ('produtos.txt','w') as arquivo:
-            arquivo.write (f'{produto.nome};{produto.preco};{produto.qtd_estoque};{produto.min_estoque}\n')
+def cadastro_produto(produto):
+    produtos_dict = {}
+    if os.path.exists("produtos.txt"):
+        with open("produtos.txt", "r") as arquivo:
+            for linha in arquivo:
+                nome, preco, qtd_estoque, min_estoque = linha.strip().split(";")
+                produtos_dict[nome] = Produtos(nome, float(preco), int(qtd_estoque), int(min_estoque))
+    if produto.nome in produtos_dict:
+        produtos_dict[produto.nome].add_estoque(produto.qtd_estoque)
     else:
-        with open ('produtos.txt','a') as arquivo:
-            arquivo.write (f'{produto.nome};{produto.preco};{produto.qtd_estoque};{produto.min_estoque}\n')
-    with open ('produtos.txt', 'r') as arquivo:
-        for linha in arquivo:
-            nome, preco, qtd_estoque, min_estoque = linha.strip().split(';')
-            produtos.append(Produtos(nome, float(preco), int(qtd_estoque), int(min_estoque)))
-    return produtos
-
+        produtos_dict[produto.nome] = produto
+    with open("produtos.txt", "w") as arquivo:
+        for p in produtos_dict.values():
+            arquivo.write(f"{p.nome};{p.preco};{p.qtd_estoque};{p.min_estoque}\n")
+    return list(produtos_dict.values())
 
 def cadastro_vendas(venda):
     vendas = []
-    if not os.path.exists ('vendas.txt', 'w'):
-        with open ('vendas.txt', 'w') as arquivo:
-            arquivo.write (f'{venda.produto};{venda.qtd};{venda.forma_pagamento};{venda.data}\n')
+    if not os.path.exists("vendas.txt"):
+        with open("vendas.txt", "w") as arquivo:
+            arquivo.write(f"{venda.produto};{venda.qtd};{venda.forma_pagamento};{venda.data}\n")
     else:
-        with open ('vendas.txt', 'a') as arquivo:
-            arquivo.write (f'{venda.produto};{venda.qtd};{venda.forma_pagamento};{venda.data}\n')
-    with open ('vendas.txt','r') as arquivo:
+        with open("vendas.txt", "a") as arquivo:
+            arquivo.write(f"{venda.produto};{venda.qtd};{venda.forma_pagamento};{venda.data}\n")
+    produtos_dict = {}
+    with open("produtos.txt", "r") as arquivo:
         for linha in arquivo:
-            produto, qtd, forma_pagamento, data = linha.strip().split(';')
-            vendas.append(Vendas(produto, int(qtd), forma_pagamento, data))
-    with open ('produtos.txt','r') as arquivo:
-        for linha in arquivo:
-            if venda.produto == linha.nome:
-                qtd = Produtos.remover(qtd)
-                with open ('produtos.txt','w')
-                    arquivo.write (f'{}')
-            
+            nome, preco, qtd_estoque, min_estoque = linha.strip().split(";")
+            produtos_dict[nome] = Produtos(nome, float(preco), int(qtd_estoque), int(min_estoque))
+    prod_obj = produtos_dict[venda.produto]
+    prod_obj.remover(venda.qtd)
+    vendas.append(venda)
+    with open("produtos_temp.txt", "w") as f:
+        for p in produtos_dict.values():
+            f.write(f"{p.nome};{p.preco};{p.qtd_estoque};{p.min_estoque}\n")
+    os.remove("produtos.txt")
+    os.rename("produtos_temp.txt", "produtos.txt")
+    return vendas, list(produtos_dict.values())
 
-produtos = cadastro(produto)
-for i in produtos:
-    print (f'Nome: {i.nome} | Preço: R${i.preco} | Quantidade em estoque: {i.qtd_estoque} | Quantidade minima em estoque: {i.min_estoque}')
+def adicionar_produto(nome_produto, qtd):
+    produtos_dict = {}
+    with open("produtos.txt", "r") as arquivo:
+        for linha in arquivo:
+            nome, preco, qtd_estoque, min_estoque = linha.strip().split(";")
+            prod_obj = Produtos(nome, float(preco), int(qtd_estoque), int(min_estoque))
+            produtos_dict[nome] = prod_obj
+    if nome_produto in produtos_dict:
+        prod_obj = produtos_dict[nome_produto]
+        prod_obj.add_estoque(int(qtd))
+
+    else:
+        raise ValueError(f"Produto \'{nome_produto}\' não encontrado.")
+    with open("produtos_temp.txt", "w") as arquivo:
+        for p in produtos_dict.values():
+            arquivo.write(f"{p.nome};{p.preco};{p.qtd_estoque};{p.min_estoque}\n")
+    os.remove("produtos.txt")
+    os.rename("produtos_temp.txt", "produtos.txt")
+    return list(produtos_dict.values())
+
+def mostrar_produtos (produtos):
+    print("Produtos cadastrados:\n")
+    for i in produtos:
+        print(i.resumo())
+        if i.precisa_repor():
+            print(f'O produto {i.nome} precisa ser reposto!')
+        
+def mostrar_vendas (vendas):
+    print('Vendas cadastradas:\n')
+    for i in vendas:
+        print(i.resumo())
+        print(f"Imposto estimado (5%): R${i.calcular_imposto():.2f}")
