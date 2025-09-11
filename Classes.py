@@ -3,11 +3,11 @@ from datetime import datetime
 class Produtos:
 
     def __init__(self,nome,preco,qtd_estoque,min_estoque):
-        if preco <= 0:
+        if float(preco) <= 0:
             raise ValueError("O preço deve ser maior que zero.")
-        if qtd_estoque < 0:
+        if int(qtd_estoque) < 0:
             raise ValueError("A quantidade em estoque não pode ser negativa.")
-        if min_estoque <=0:
+        if int(min_estoque) <=0:
             raise ValueError("A quantidade minima em estoque deve ser maior que zero.")
         self.nome=nome
         self.preco=preco
@@ -16,16 +16,17 @@ class Produtos:
 
 
     def add_estoque(self,qtd):
-         if qtd<=0:
+        if int(qtd)<=0:
              raise ValueError("O numero não pode ser menor igual a 0")
-         self.qtd_estoque += qtd
+        self.qtd_estoque += int(qtd)
          
     def remover(self,qtd):
-        if qtd<=0:
+        if int(qtd)<=0:
             raise ValueError("O numero não pode ser menor igual a 0")
-        if qtd> self.qtd_estoque:
+        if int(qtd)> int(self.qtd_estoque):
             raise ValueError("O numero estoque é insuficiente")
-        self.qtd_estoque -= qtd
+        self.qtd_estoque -= int(qtd)
+        return self.qtd_estoque
     
     def precisa_repor(self):
         return self.qtd_estoque <= self.min_estoque
@@ -36,9 +37,9 @@ class Produtos:
 
 class Vendas:
     def __init__(self, produto, qtd, forma_pagamento=None, data=None):
-        if qtd <= 0:
+        if int(qtd) <= 0:
             raise ValueError("A quantidade da venda deve ser positiva.")
-        if qtd > produto.qtd_estoque:
+        if int(qtd) > int(produto.qtd_estoque):
             raise ValueError("Estoque insuficiente.")
 
         self.data = data or datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -58,5 +59,5 @@ class Vendas:
         desconto = self.valorTotal * (percentual / 100)
         self.valorTotal -= desconto
 
-    def calcular_imposto(self, taxa=0.05):
+    def calcular_imposto(self, taxa=0.07):
          return self.valorTotal * taxa
